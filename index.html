@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gmail UI Mail System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <link rel="icon" href="122.png" type="image/png">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #f0f4f8;
+      color: #202124;
+    }
+
+    .header {
+      background-color: #1a73e8;
+      padding: 15px 25px;
+      font-size: 20px;
+      font-weight: 500;
+      color: white;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .layout {
+      display: flex;
+      height: calc(100vh - 80px);
+    }
+
+    .sidebar {
+      width: 300px;
+      background: linear-gradient(to bottom, #1a73e8, #34a853);
+      color: white;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .sidebar h3 {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .sidebar li {
+      padding: 12px 20px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .sidebar li:hover {
+      background-color: #ffffff30;
+      transform: scale(1.05);
+    }
+
+    .content {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+      background-color: #ffffff;
+    }
+
+    .email-card {
+      background: #ffffff;
+      padding: 20px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(60, 64, 67, 0.1);
+      transition: background-color 0.3s;
+    }
+
+    .email-card:hover {
+      background-color: #f1f3f4;
+    }
+
+    .email-card h4 {
+      margin: 0 0 8px;
+    }
+
+    .email-card small {
+      color: #5f6368;
+    }
+
+    button {
+      background-color: #34a853;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 24px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #28a745;
+    }
+
+    .delete-btn {
+      background-color: #f44336;
+      margin-top: 10px;
+      padding: 8px 15px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .delete-btn:hover {
+      background-color: #e53935;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #loginView {
+      max-width: 400px;
+      margin: 100px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #mailApp {
+      display: none;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid #dadce0;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #1a73e8;
+    }
+
+    .greeting {
+      font-size: 16px;
+      color: #555;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="header">TMT Mail</div>
+
+<!-- Login -->
+<div id="loginView">
+  <h2 style="margin-bottom: 20px;">Login</h2>
+  <div class="form-group">
+    <input id="emailInput" placeholder="Email" />
+  </div>
+  <div class="form-group">
+    <input id="passwordInput" type="password" placeholder="Password" />
+  </div>
+  <button onclick="login()">Login</button>
+  <p id="loginError" style="color:red; margin-top: 10px;"></p>
+</div>
+
+<!-- Mail App -->
+<div id="mailApp">
+  <div class="layout">
+    <div class="sidebar">
+      <h3>Menu</h3>
+      <ul>
+        <li onclick="showSection('compose')">Compose</li>
+        <li onclick="showSection('inbox')">Inbox</li>
+        <li onclick="logout()">Logout</li>
+      </ul>
+    </div>
+    <div class="content">
+      <div class="topbar">
+        <div class="greeting">Hello, <span id="currentUser"></span></div>
+      </div>
+
+      <div id="composeSection">
+        <h3>Compose Email</h3>
+        <div class="form-group">
+          <input id="toInput" placeholder="To (email)" />
+        </div>
+        <div class="form-group">
+          <input id="subjectInput" placeholder="Subject" />
+        </div>
+        <div class="form-group">
+          <textarea id="bodyInput" rows="5" placeholder="Message"></textarea>
+        </div>
+        <button onclick="sendMail()">Send</button>
+      </div>
+
+      <div id="inboxSection" class="hidden">
+        <h3>Inbox</h3>
+        <div id="inboxView"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const users = {
+    "sehajdeepsinghwalia@tmtmail.com": "Sehaj@7819",
+    "jayanshmahajan@tmtmail.com": "0777",
+    "extra@tmtmail.com": "extra"
+  };
+
+  let currentUser = null;
+
+  function login() {
+    const email = document.getElementById("emailInput").value.trim().toLowerCase();
+    const password = document.getElementById("passwordInput").value;
+
+    if (users[email] && users[email] === password) {
+      currentUser = email;
+      document.getElementById("loginError").innerText = "";
+      document.getElementById("loginView").classList.add("hidden");
+      document.getElementById("mailApp").style.display = "block";
+      document.getElementById("currentUser").innerText = currentUser;
+      showSection('inbox');
+      loadInbox();
+    } else {
+      document.getElementById("loginError").innerText = "Invalid email or password.";
+    }
+  }
+
+  function logout() {
+    currentUser = null;
+    document.getElementById("mailApp").style.display = "none";
+    document.getElementById("loginView").classList.remove("hidden");
+    document.getElementById("emailInput").value = "";
+    document.getElementById("passwordInput").value = "";
+  }
+
+  function sendMail() {
+    const to = document.getElementById("toInput").value.trim().toLowerCase();
+    const subject = document.getElementById("subjectInput").value;
+    const body = document.getElementById("bodyInput").value;
+
+    if (!users[to]) {
+      alert("Recipient does not exist.");
+      return;
+    }
+
+    const message = {
+      from: currentUser,
+      to,
+      subject,
+      body,
+      timestamp: new Date().toLocaleString()
+    };
+
+    const key = "inbox_" + to;
+    let inbox = JSON.parse(localStorage.getItem(key)) || [];
+    inbox.unshift(message);
+    localStorage.setItem(key, JSON.stringify(inbox));
+
+    alert("Email sent!");
+    document.getElementById("toInput").value = "";
+    document.getElementById("subjectInput").value = "";
+    document.getElementById("bodyInput").value = "";
+    showSection('inbox');
+    loadInbox();
+  }
+
+  function loadInbox() {
+    const key = "inbox_" + currentUser;
+    const inbox = JSON.parse(localStorage.getItem(key)) || [];
+
+    const inboxView = document.getElementById("inboxView");
+    inboxView.innerHTML = "";
+
+    if (inbox.length === 0) {
+      inboxView.innerHTML = "<p>No messages.</p>";
+    } else {
+      inbox.forEach((msg, index) => {
+        inboxView.innerHTML += `
+          <div class="email-card">
+            <h4>${msg.subject}</h4>
+            <small><strong>From:</strong> ${msg.from} &nbsp;&bull;&nbsp; ${msg.timestamp}</small>
+            <p>${msg.body}</p>
+            <button onclick="deleteMail(${index})" class="delete-btn">Delete</button>
+          </div>
+        `;
+      });
+    }
+  }
+
+  function deleteMail(index) {
+    const key = "inbox_" + currentUser;
+    const inbox = JSON.parse(localStorage.getItem(key)) || [];
+    inbox.splice(index, 1);
+    localStorage.setItem(key, JSON.stringify(inbox));
+    loadInbox();
+  }
+
+  function showSection(section) {
+    document.getElementById("composeSection").classList.add("hidden");
+    document.getElementById("inboxSection").classList.add("hidden");
+
+    if (section === "compose") {
+      document.getElementById("composeSection").classList.remove("hidden");
+    } else {
+      document.getElementById("inboxSection").classList.remove("hidden");
+      loadInbox();
+    }
+  }
+</script>
+
+</body>
+</html>
